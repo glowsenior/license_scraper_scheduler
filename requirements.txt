@@ -1,0 +1,6 @@
+Flask
+python-dotenv           # For loading environment variables (if needed)
+schedule                # For scheduling tasks
+psutil                  # For checking process status
+
+#and install each scraper modules

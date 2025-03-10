@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scraper Bot Status</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold text-center mb-6 animate-bounce">Scraper Bot Status</h1>
+
+        <button onclick="triggerScrape()" type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4 transition duration-300 ease-in-out transform hover:scale-105">
+            Trigger Scrape Cycle (Manual)
+        </button>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-300 shadow-lg rounded-lg">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="py-2 px-4 border-b">Bot Name</th>
+                        <th class="py-2 px-4 border-b">Status</th>
+                        <th class="py-2 px-4 border-b">Start Time</th>
+                        <th class="py-2 px-4 border-b">End Time</th>
+                        <th class="py-2 px-4 border-b">Next Cycle</th>
+                        <th class="py-2 px-4 border-b">Last Run Status</th>
+                        <th class="py-2 px-4 border-b">Error (if any)</th>
+                    </tr>
+                </thead>
+                <tbody id="bot-table-body" class="divide-y divide-gray-200">
+                    {% for bot_name, status in bot_statuses.items() %}
+                    <tr class="
+                        {% if status.status == 'failed' %}bg-red-100 hover:bg-red-200
+                        {% elif status.status == 'completed' %}bg-green-100 hover:bg-green-200
+                        {% elif status.status == 'running' %}bg-yellow-100 hover:bg-yellow-200
+                        {% else %}hover:bg-gray-50{% endif %}
+                        transition duration-200">
+                        <td class="py-2 px-4">{{ bot_name }}</td>
+                        <td class="py-2 px-4">{{ status.status }}</td>
+                        <td class="py-2 px-4">{{ status.start_time }}</td>
+                        <td class="py-2 px-4">{{ status.end_time }}</td>
+                        <td class="py-2 px-4">{{ status.next_cycle }}</td>
+                        <td class="py-2 px-4">{{ status.last_run_status }}</td>
+                        <td class="py-2 px-4">{{ status.get("error_message", "") }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Function to fetch updated bot statuses and update the table
+        async function updateTable() {
+            try {
+                const response = await fetch("/get_bot_statuses");
+                const botStatuses = await response.json();
+
+                const tableBody = document.getElementById("bot-table-body");
+                tableBody.innerHTML = ""; // Clear the existing table rows
+
+                // Populate the table with updated data
+                for (const [botName, status] of Object.entries(botStatuses)) {
+                    const row = document.createElement("tr");
+
+                    // Determine the background color based on the status
+                    let bgColor = "hover:bg-gray-50"; // Default
+                    if (status.status === "failed") {
+                        bgColor = "bg-red-100 hover:bg-red-200";
+                    } else if (status.status === "completed") {
+                        bgColor = "bg-green-100 hover:bg-green-200";
+                    } else if (status.status === "running") {
+                        bgColor = "bg-yellow-100 hover:bg-yellow-200";
+                    }
+
+                    row.className = `${bgColor} transition duration-200`;
+
+                    row.innerHTML = `
+                        <td class="py-2 px-4">${botName}</td>
+                        <td class="py-2 px-4">${status.status}</td>
+                        <td class="py-2 px-4">${status.start_time}</td>
+                        <td class="py-2 px-4">${status.end_time}</td>
+                        <td class="py-2 px-4">${status.next_cycle}</td>
+                        <td class="py-2 px-4">${status.last_run_status}</td>
+                        <td class="py-2 px-4">${status.error_message || ""}</td>
+                    `;
+
+                    tableBody.appendChild(row);
+                }
+            } catch (error) {
+                console.error("Error updating table:", error);
+            }
+        }
+
+        async function triggerScrape() {
+            try {
+                const response = await fetch("/trigger_scrape", {
+                    method: "GET", // or "GET" depending on your server implementation
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (response.ok) {
+                    alert("Scrape cycle triggered successfully!");
+                } else {
+                    alert("Failed to trigger scrape cycle.");
+                }
+            } catch (error) {
+                console.error("Error triggering scrape cycle:", error);
+                alert("An error occurred while triggering the scrape cycle.");
+            }
+        }
+
+        // Update the table every 1 second
+        setInterval(updateTable, 1000);
+    </script>
+</body>
+</html>
