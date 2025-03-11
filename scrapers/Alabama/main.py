@@ -211,6 +211,6 @@ class LicenseCrawler:
                 self._write_license_data(additional_data, writer)
 
 if __name__ == "__main__":
-    crawler = LicenseCrawler("639d775e312601bdd68a44de0c235ac8")
+    crawler = LicenseCrawler()
     crawler.run()
 
